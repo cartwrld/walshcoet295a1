@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def calc_distance(lat1, long1, lat2, long2):
     pass
 
@@ -29,7 +30,7 @@ class QuakeData:
     """"""
 
     location_filter = (0, 0, 0)
-    property_filter = (0, 0, 0)
+    property_filter = (5.0, 5, 5)
 
     def __init__(self, geojson):
 
@@ -56,7 +57,7 @@ class QuakeData:
                           ))
 
         self.quake_array = valid_quakes
-        self.get_filtered_array()
+        # self.get_filtered_array()
         ###################################
 
     def set_location_filter(self, latitude, longitude, distance):
@@ -72,7 +73,22 @@ class QuakeData:
         QuakeData.property_filter = (0.0, 0.0, 0.0)
 
     def get_filtered_array(self):
-        print(self.quake_array)
+
+        for quake in self.quake_array:
+
+            mag_f = self.property_filter[0]
+            felt_f = self.property_filter[1]
+            sig_f = self.property_filter[2]
+
+            if quake.mag == None:
+                continue
+            elif quake.felt == None:
+                continue
+            elif quake.sig == None:
+                continue
+
+            if quake.mag >= mag_f:
+                print(quake)
 
     def get_filtered_list(self):
         pass

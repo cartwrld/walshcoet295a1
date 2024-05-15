@@ -6,12 +6,13 @@ from earthquakes import QuakeData, Quake
 
 quakes = {}
 
-path = Path("./earthquakes_copy.geojson")
+path = Path("./earthquakes.geojson")
 
 with open(path, 'r') as file:
     data = json.load(file)
 
 ex1 = QuakeData(data)
+ex1.get_filtered_array()
 
 
 def print_menu():
@@ -43,15 +44,21 @@ def set_location_filter():
 
 
 def set_property_filter():
-    pass
+    mag = float(input("Please enter the Magnitude:\t"))
+    felt = float(input("Please enter the Felt value:\t"))
+    sig = float(input("Please enter the Significance:\t"))
+
+    QuakeData.property_filter = (mag, felt, sig)
 
 
 def clear_filters():
-    pass
+    QuakeData.location_filter = (0.0, 0.0, 0.0)
+    QuakeData.property_filter = (0.0, 0.0, 0.0)
 
 
-def display_quakes():
-    pass
+def display_quakes(qd):
+    for quake in qd.quake_array:
+        print(quake)
 
 
 def display_exceptional_quakes():
@@ -74,13 +81,15 @@ def get_menu_input():
     option = input("Please select an option from the menu. (1-9)\n")
     if option == '1':
         set_location_filter()
-        print(QuakeData.location_filter)
+        print("Location filter has been updated.")
     elif option == '2':
         set_property_filter()
+        print("Property filter has been updated.")
     elif option == '3':
         clear_filters()
+        print("Filters have been cleared.")
     elif option == '4':
-        display_quakes()
+        display_quakes(ex1)
     elif option == '5':
         display_exceptional_quakes()
     elif option == '6':
@@ -92,9 +101,6 @@ def get_menu_input():
     elif option == '9':
         quit()
 
-
-print_menu()
-get_menu_input()
-
-
-# print(f"{ex1.quake_array[0]}")
+while True:
+    print_menu()
+    get_menu_input()
