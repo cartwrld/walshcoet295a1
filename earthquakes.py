@@ -8,19 +8,19 @@ def calc_distance(lat1, long1, lat2, long2):
 def has_invalid_props(qp):
     flag = False
 
-    if qp['mag'] == "":
+    if qp['mag'] == None:
         print('failed on mag')
         flag = True
-    elif qp['time'] == "":
+    elif qp['time'] == None:
         flag = True
         print('failed on time')
-    elif qp['felt'] == "":
+    elif qp['felt'] == None:
         flag = True
-        print('failed on felt')
-    elif qp['sig'] == "":
+        # print('failed on felt')
+    elif qp['sig'] == None:
         flag = True
         print('failed on sig')
-    elif qp['type'] == "":
+    elif qp['type'] == None:
         flag = True
         print('failed on type')
     return flag
@@ -30,7 +30,7 @@ class QuakeData:
     """"""
 
     location_filter = (0, 0, 0)
-    property_filter = (5.0, 5, 5)
+    property_filter = (0, 0, 0)
 
     def __init__(self, geojson):
 
@@ -46,10 +46,13 @@ class QuakeData:
                 continue
             if quake['geometry']['type'] != "Point":
                 continue
-            if type(quake['geometry']['coordinates']) != list:
+            if not isinstance(quake['geometry']['coordinates'], list):
                 continue
             if len(quake['geometry']['coordinates']) != 3:
                 continue
+
+            # add a check to make sure they're all numbers
+
             else:
                 valid_quakes.append(
                     Quake(qp['mag'], qp['time'], qp['felt'], qp['sig'], qp['types'],
@@ -57,16 +60,24 @@ class QuakeData:
                           ))
 
         self.quake_array = valid_quakes
+        print(f"len of valid quakes: {len(valid_quakes)}")
         # self.get_filtered_array()
         ###################################
 
     def set_location_filter(self, latitude, longitude, distance):
         QuakeData.location_filter = (latitude, longitude, distance)
-        print(QuakeData.location_filter)
 
     def set_property_filter(self, magnitude, felt, significance):
+
+        if magnitude == "":
+            magnitude = 0
+        if felt == "":
+            felt = 0
+        if significance == "":
+            significance = 0
+
         QuakeData.property_filter = (magnitude, felt, significance)
-        print(QuakeData.property_filter)
+        # print(QuakeData.property_filter)
 
     def clear_filters(self):
         QuakeData.location_filter = (0.0, 0.0, 0.0)
@@ -74,21 +85,23 @@ class QuakeData:
 
     def get_filtered_array(self):
 
+        filtered_quakes = []
+
         for quake in self.quake_array:
 
             mag_f = self.property_filter[0]
             felt_f = self.property_filter[1]
             sig_f = self.property_filter[2]
 
-            if quake.mag == None:
-                continue
-            elif quake.felt == None:
-                continue
-            elif quake.sig == None:
-                continue
-
             if quake.mag >= mag_f:
-                print(quake)
+                if quake.sig >= sig_f:
+                    if quake.felt >= felt_f:
+                        print(quake)
+                        filtered_quakes.append(quake)
+
+        print(f"len of filtered: {len(filtered_quakes)}")
+
+        return filtered_quakes
 
     def get_filtered_list(self):
         pass

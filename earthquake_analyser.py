@@ -1,5 +1,5 @@
 import numpy as np
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import json
 from pathlib import Path
 from earthquakes import QuakeData, Quake
@@ -7,12 +7,13 @@ from earthquakes import QuakeData, Quake
 quakes = {}
 
 path = Path("./earthquakes.geojson")
+# path = Path("./earthquakes_copy.geojson")
 
 with open(path, 'r') as file:
     data = json.load(file)
 
-ex1 = QuakeData(data)
-ex1.get_filtered_array()
+qd = QuakeData(data)
+qd.get_filtered_array()
 
 
 def print_menu():
@@ -40,15 +41,29 @@ def set_location_filter():
     lon = input("Please enter the Longitude:\t")
     dist = input("Please enter the Distance:\t")
 
-    QuakeData.location_filter = (lat, lon, dist)
+    if lat == "":
+        lat = 0
+    if lon == "":
+        lon = 0
+    if dist == "":
+        dist = 0
+
+    qd.set_location_filter(lat, lon, dist)
 
 
 def set_property_filter():
-    mag = float(input("Please enter the Magnitude:\t"))
-    felt = float(input("Please enter the Felt value:\t"))
-    sig = float(input("Please enter the Significance:\t"))
+    mag = input("Please enter the Magnitude:\t")
+    felt = input("Please enter the Felt value:\t")
+    sig = input("Please enter the Significance:\t")
 
-    QuakeData.property_filter = (mag, felt, sig)
+    if mag == "":
+        lat = 0
+    if felt == "":
+        lon = 0
+    if sig == "":
+        dist = 0
+
+    qd.set_property_filter(mag, felt, sig)
 
 
 def clear_filters():
@@ -56,8 +71,8 @@ def clear_filters():
     QuakeData.property_filter = (0.0, 0.0, 0.0)
 
 
-def display_quakes(qd):
-    for quake in qd.quake_array:
+def display_quakes(q_data):
+    for quake in q_data:
         print(quake)
 
 
@@ -70,7 +85,45 @@ def display_magnitude_stats():
 
 
 def plot_quake_map():
-    pass
+    # magnitudes_list = [quake.mag for quake in qd.quake_array]
+    # latitudes_list = [quake.lat for quake in qd.quake_array]
+    # longitudes_list = [quake.long for quake in qd.quake_array]
+    #
+    # lat_range = np.atleast_2d(np.arange(-150, 150)).transpose()
+    # long_range = np.atleast_2d(np.arange(-150, 150)).transpose()
+    #
+    #
+    # print(magnitudes_list)
+    # print(latitudes_list)
+    # print(longitudes_list)
+    #
+    #
+    # plt.plot(long_range, lat_range, "bo", markersize=latitudes_list[, mew=2, label='Average Transistor Count')
+    # plt.show()
+    # Extract latitude, longitude, and magnitude for each filtered quake
+    lats = [quake.lat for quake in qd.quake_array]
+    longs = [quake.long for quake in qd.quake_array]
+    magnitudes = [quake.mag for quake in qd.quake_array]
+
+    plt.scatter(x=lats, y=longs, c=magnitudes)
+
+    plt.xlabel('Longitude')
+    plt.ylabel('Latitude')
+    plt.title('Earthquake Map')
+    plt.show()
+
+    # Create scatter plot
+    plt.figure(figsize=(10, 8))
+    plt.scatter(longs, lats, s=[mag ** 3.5 for mag in magnitudes], alpha=0.5)
+
+
+    # plt.show()
+
+
+    #
+    # plt.semilogy(a_years, a_trans, 'bo', label="Transistor Count", alpha=0.2)
+    # plt.plot(year_range, mean_trans_for_each_year, "bo", markersize=14, mew=2, label='Average Transistor Count')
+    # plt.show()
 
 
 def plot_magnitude_chart():
@@ -89,7 +142,7 @@ def get_menu_input():
         clear_filters()
         print("Filters have been cleared.")
     elif option == '4':
-        display_quakes(ex1)
+        display_quakes(qd.quake_array)
     elif option == '5':
         display_exceptional_quakes()
     elif option == '6':
