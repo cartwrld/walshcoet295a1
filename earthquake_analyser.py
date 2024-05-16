@@ -4,14 +4,6 @@ import json
 from pathlib import Path
 from earthquakes import QuakeData, Quake
 
-path = Path("./earthquakes.geojson")
-
-with open(path, 'r') as file:
-    data = json.load(file)
-
-qd = QuakeData(data)
-qd.get_filtered_array()
-
 
 def print_menu():
     menu = "\n================================================\n"
@@ -33,7 +25,7 @@ def print_menu():
     print(menu)
 
 
-def set_location_filter():
+def set_location_filter(qd):
     lat = input("Please enter the Latitude:\t")
     lon = input("Please enter the Longitude:\t")
     dist = input("Please enter the Distance:\t")
@@ -48,7 +40,8 @@ def set_location_filter():
     qd.set_location_filter(lat, lon, dist)
 
 
-def set_property_filter():
+
+def set_property_filter(qd):
     mag = input("Please enter the Magnitude:\t")
     felt = input("Please enter the Felt value:\t")
     sig = input("Please enter the Significance:\t")
@@ -63,14 +56,13 @@ def set_property_filter():
     qd.set_property_filter(mag, felt, sig)
 
 
-def clear_filters():
-    QuakeData.location_filter = (0.0, 0.0, 0.0)
-    QuakeData.property_filter = (0.0, 0.0, 0.0)
+def clear_filters(qd):
+    qd.location_filter = (0.0, 0.0, 0.0)
+    qd.property_filter = (0.0, 0.0, 0.0)
 
 
-
-def display_quakes(q_data):
-    for quake in q_data:
+def display_quakes(qd):
+    for quake in qd.get_filtered_array():
         print(quake)
 
 
@@ -82,8 +74,7 @@ def display_magnitude_stats():
     pass
 
 
-def plot_quake_map():
-
+def plot_quake_map(qd):
     lats = [quake.lat for quake in qd.quake_array]
     longs = [quake.long for quake in qd.quake_array]
     magnitudes = [quake.mag for quake in qd.quake_array]
@@ -95,29 +86,18 @@ def plot_quake_map():
     plt.title('Earthquake Map')
     plt.show()
 
-    # Create scatter plot
     plt.figure(figsize=(10, 8))
     plt.scatter(longs, lats, s=[mag ** 3.5 for mag in magnitudes], alpha=0.5)
     plt.show()
 
 
-
-
-def plot_magnitude_chart():
-
-    print("triggering 8")
-
-    range = np.arange(0,11)
-    print(range)
-    magnitudes = [quake.mag for quake in qd.quake_array]
+def plot_magnitude_chart(qd):
+    magnitudes = [quake.mag for quake in qd.get_filtered_array()]
 
     rounded_down_mags = np.floor(magnitudes).astype(int)
 
-    print(rounded_down_mags)
-    # Define a list of colors
     n, bins, patches = plt.hist(magnitudes, bins=10)
 
-    # Color code by height
     fracs = n / n.max()
     norm = plt.Normalize(fracs.min(), fracs.max())
 
@@ -144,31 +124,43 @@ def plot_magnitude_chart():
     plt.show()
 
 
-
-def get_menu_input():
+def get_menu_input(qd):
     option = input("Please select an option from the menu. (1-9)\n")
     if option == '1':
-        set_location_filter()
+        set_location_filter(qd)
         print("Location filter has been updated.")
     elif option == '2':
-        set_property_filter()
+        set_property_filter(qd)
         print("Property filter has been updated.")
     elif option == '3':
-        clear_filters()
+        clear_filters(qd)
         print("Filters have been cleared.")
     elif option == '4':
-        display_quakes(qd.quake_array)
+        display_quakes(qd)
     elif option == '5':
         display_exceptional_quakes()
     elif option == '6':
         display_magnitude_stats()
     elif option == '7':
-        plot_quake_map()
+        plot_quake_map(qd)
     elif option == '8':
-        plot_magnitude_chart()
+        plot_magnitude_chart(qd)
     elif option == '9':
         quit()
 
-while True:
-    print_menu()
-    get_menu_input()
+
+def analyse_earthquakes():
+    path = Path("./earthquakes.geojson")
+
+    with open(path, 'r') as file:
+        data = json.load(file)
+
+    quake_data = QuakeData(data)
+    quake_data.get_filtered_array()
+
+    while True:
+        print_menu()
+        get_menu_input(quake_data)
+
+
+analyse_earthquakes()

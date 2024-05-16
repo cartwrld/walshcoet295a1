@@ -25,7 +25,7 @@ class QuakeData:
     """"""
 
     location_filter = (0, 0, 0)
-    property_filter = (9, 0, 0)
+    property_filter = (5, 5, 500)
 
     def __init__(self, geojson):
 
@@ -58,15 +58,20 @@ class QuakeData:
 
     def set_location_filter(self, latitude, longitude, distance):
         QuakeData.location_filter = (latitude, longitude, distance)
+        print(f"Location filter has been updated --> (Latitude: {latitude}, Longitude: {longitude}, Distance: {distance}")
 
     def set_property_filter(self, magnitude, felt, significance):
         QuakeData.property_filter = (magnitude, felt, significance)
+        print(f"Property filter has been updated --> (Magnitude: {magnitude}, Felt: {felt}, Significance: {significance}")
 
     def clear_filters(self):
         QuakeData.location_filter = (0.0, 0.0, 0.0)
         QuakeData.property_filter = (0.0, 0.0, 0.0)
 
     def get_filtered_array(self):
+
+        print(f"Location filter: {self.location_filter[0]}, {self.location_filter[1]}, {self.location_filter[2]}")
+        print(f"Property filter: {self.property_filter[0]}, {self.property_filter[1]}, {self.property_filter[2]}")
 
         filtered_quakes = []
 
