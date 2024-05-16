@@ -57,11 +57,11 @@ def set_property_filter():
     sig = input("Please enter the Significance:\t")
 
     if mag == "":
-        lat = 0
+        mag = 0
     if felt == "":
-        lon = 0
+        felt = 0
     if sig == "":
-        dist = 0
+        sig = 0
 
     qd.set_property_filter(mag, felt, sig)
 
@@ -115,19 +115,39 @@ def plot_quake_map():
     # Create scatter plot
     plt.figure(figsize=(10, 8))
     plt.scatter(longs, lats, s=[mag ** 3.5 for mag in magnitudes], alpha=0.5)
+    plt.show()
 
 
-    # plt.show()
-
-
-    #
-    # plt.semilogy(a_years, a_trans, 'bo', label="Transistor Count", alpha=0.2)
-    # plt.plot(year_range, mean_trans_for_each_year, "bo", markersize=14, mew=2, label='Average Transistor Count')
-    # plt.show()
 
 
 def plot_magnitude_chart():
-    pass
+
+    print("triggering 8")
+
+    range = np.arange(0,11)
+    print(range)
+    magnitudes = [quake.mag for quake in qd.quake_array]
+
+    rounded_down_mags = np.floor(magnitudes).astype(int)
+
+    print(rounded_down_mags)
+    # Define a list of colors
+    n, bins, patches = plt.hist(magnitudes, bins=10)
+
+    # Color code by height
+    fracs = n / n.max()
+    norm = plt.Normalize(fracs.min(), fracs.max())
+
+    for this_frac, this_patch in zip(fracs, patches):
+        color = plt.cm.viridis(norm(this_frac))
+        this_patch.set_facecolor(color)
+
+    plt.ylabel('Frequency')
+    plt.xlabel('Magnitude')
+    plt.title('Magnitude Analysis')
+
+    plt.show()
+
 
 
 def get_menu_input():
