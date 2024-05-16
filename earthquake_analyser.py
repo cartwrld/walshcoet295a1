@@ -4,10 +4,7 @@ import json
 from pathlib import Path
 from earthquakes import QuakeData, Quake
 
-quakes = {}
-
 path = Path("./earthquakes.geojson")
-# path = Path("./earthquakes_copy.geojson")
 
 with open(path, 'r') as file:
     data = json.load(file)
@@ -71,6 +68,7 @@ def clear_filters():
     QuakeData.property_filter = (0.0, 0.0, 0.0)
 
 
+
 def display_quakes(q_data):
     for quake in q_data:
         print(quake)
@@ -85,22 +83,7 @@ def display_magnitude_stats():
 
 
 def plot_quake_map():
-    # magnitudes_list = [quake.mag for quake in qd.quake_array]
-    # latitudes_list = [quake.lat for quake in qd.quake_array]
-    # longitudes_list = [quake.long for quake in qd.quake_array]
-    #
-    # lat_range = np.atleast_2d(np.arange(-150, 150)).transpose()
-    # long_range = np.atleast_2d(np.arange(-150, 150)).transpose()
-    #
-    #
-    # print(magnitudes_list)
-    # print(latitudes_list)
-    # print(longitudes_list)
-    #
-    #
-    # plt.plot(long_range, lat_range, "bo", markersize=latitudes_list[, mew=2, label='Average Transistor Count')
-    # plt.show()
-    # Extract latitude, longitude, and magnitude for each filtered quake
+
     lats = [quake.lat for quake in qd.quake_array]
     longs = [quake.long for quake in qd.quake_array]
     magnitudes = [quake.mag for quake in qd.quake_array]
@@ -145,6 +128,18 @@ def plot_magnitude_chart():
     plt.ylabel('Frequency')
     plt.xlabel('Magnitude')
     plt.title('Magnitude Analysis')
+
+    mean_val = np.mean(rounded_down_mags)
+    mode_val = 5.5
+    std_dev = np.std(rounded_down_mags)
+
+    legend_labels = [
+        f"Mean: %.2f" % mean_val,
+        f"Mode: %.2f" % mode_val,
+        f"Std. Deviation: %.2f" % std_dev
+    ]
+
+    plt.legend(legend_labels, title="Statistics")
 
     plt.show()
 

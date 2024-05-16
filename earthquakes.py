@@ -9,20 +9,15 @@ def has_invalid_props(qp):
     flag = False
 
     if qp['mag'] == None:
-        print('failed on mag')
         flag = True
     elif qp['time'] == None:
         flag = True
-        print('failed on time')
     elif qp['felt'] == None:
         flag = True
-        # print('failed on felt')
     elif qp['sig'] == None:
         flag = True
-        print('failed on sig')
     elif qp['type'] == None:
         flag = True
-        print('failed on type')
     return flag
 
 
@@ -30,7 +25,7 @@ class QuakeData:
     """"""
 
     location_filter = (0, 0, 0)
-    property_filter = (0, 0, 0)
+    property_filter = (9, 0, 0)
 
     def __init__(self, geojson):
 
@@ -60,24 +55,12 @@ class QuakeData:
                           ))
 
         self.quake_array = valid_quakes
-        print(f"len of valid quakes: {len(valid_quakes)}")
-        # self.get_filtered_array()
-        ###################################
 
     def set_location_filter(self, latitude, longitude, distance):
         QuakeData.location_filter = (latitude, longitude, distance)
 
     def set_property_filter(self, magnitude, felt, significance):
-
-        if magnitude == "":
-            magnitude = 0
-        if felt == "":
-            felt = 0
-        if significance == "":
-            significance = 0
-
         QuakeData.property_filter = (magnitude, felt, significance)
-        # print(QuakeData.property_filter)
 
     def clear_filters(self):
         QuakeData.location_filter = (0.0, 0.0, 0.0)
@@ -89,6 +72,10 @@ class QuakeData:
 
         for quake in self.quake_array:
 
+            lat_f = self.location_filter[0]
+            long_f = self.location_filter[1]
+            dist_f = self.location_filter[2]
+
             mag_f = self.property_filter[0]
             felt_f = self.property_filter[1]
             sig_f = self.property_filter[2]
@@ -96,10 +83,7 @@ class QuakeData:
             if quake.mag >= mag_f:
                 if quake.sig >= sig_f:
                     if quake.felt >= felt_f:
-                        print(quake)
                         filtered_quakes.append(quake)
-
-        print(f"len of filtered: {len(filtered_quakes)}")
 
         return filtered_quakes
 
