@@ -93,11 +93,12 @@ def display_magnitude_stats(qd):
 
 
 def plot_quake_map(qd):
-    lats = [quake.lat for quake in qd.quake_array]
-    longs = [quake.long for quake in qd.quake_array]
-    magnitudes = [quake.mag for quake in qd.quake_array]
+    quake_lats = [quake.lat for quake in qd.quake_array]
+    quake_longs = [quake.long for quake in qd.quake_array]
+    quake_mags = [quake.mag for quake in qd.quake_array]
 
-    plt.scatter(x=lats, y=longs, c=magnitudes)
+    plt.scatter(x=quake_lats, y=quake_longs, s=[mag ** 4.5 for mag in quake_mags], c=[mag ** 4.5 for mag in quake_mags], alpha=0.5)
+    # plt.scatter(x=quake_lats, y=quake_longs, c=quake_mags)
 
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
@@ -105,7 +106,7 @@ def plot_quake_map(qd):
     plt.show()
 
     plt.figure(figsize=(10, 8))
-    plt.scatter(longs, lats, s=[mag ** 3.5 for mag in magnitudes], alpha=0.5)
+    # plt.scatter(quake_longs, quake_lats, s=[mag ** 3.5 for mag in quake_mags], alpha=0.5)
     plt.show()
 
 
@@ -131,7 +132,7 @@ def plot_magnitude_chart(qd):
 
     plt.ylabel('Frequency')
     plt.xlabel('Magnitude')
-    plt.title('Magnitude Analysis')
+    plt.title('Earthquake Magnitude Analysis')
 
     plt.bar(x_positions, counts, width=0.8, edgecolor='black', color=bar_colors)
 
