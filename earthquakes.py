@@ -25,7 +25,7 @@ class QuakeData:
     """"""
 
     location_filter = (0, 0, 0)
-    property_filter = (5, 5, 500)
+    property_filter = (0, 0, 0)
 
     def __init__(self, geojson):
 

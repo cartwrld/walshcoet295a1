@@ -23,6 +23,21 @@ def print_menu():
     menu += "================================================\n"
 
     print(menu)
+def print_menu2():
+    menu = "\n==================================================================\n"
+    menu += "|\t\t           Earthquake Analyser Menu\t\t\t             |\n"
+    menu += "==================================================================\n"
+    menu += "|                                                                |\n"
+    menu += "|\t1)\tSet Location Filter\t\t5)\tDisplay Exceptional Quakes\t |\n"
+    menu += "|\t2)\tSet Property Filter\t\t6)\tDisplay Magnitude Stats\t\t |\n"
+    menu += "|\t3)\tClear Filters\t\t\t7)\tPlot Quake Map\t\t\t\t |\n"
+    menu += "|\t4)\tDisplay Quakes\t\t\t8)\tPlot Magnitude Chart\t\t |\n"
+    menu += "|                                                                |\n"
+    menu += "|\t\t\t\t\t\t9)\tQuit                                 |\n"
+    # menu += "|                                                                |\n"
+    menu += "==================================================================\n"
+
+    print(menu)
 
 
 def set_location_filter(qd):
@@ -38,7 +53,6 @@ def set_location_filter(qd):
         dist = 0
 
     qd.set_location_filter(lat, lon, dist)
-
 
 
 def set_property_filter(qd):
@@ -66,12 +80,37 @@ def display_quakes(qd):
         print(quake)
 
 
-def display_exceptional_quakes():
-    pass
+def display_exceptional_quakes(qd):
+
+    mags = [quake.mag for quake in qd.quake_array]
+
+    median = np.median(mags)
+    std_dev = np.std(mags)
+    threshold = median + std_dev
+
+    exceptional_quakes = [quake for quake in qd.quake_array if quake.mag >= threshold]
+
+    for eq in exceptional_quakes:
+        print(eq)
 
 
-def display_magnitude_stats():
-    pass
+
+def display_magnitude_stats(qd):
+    mags = [quake.mag for quake in qd.quake_array]
+
+    mean_val = np.mean(mags)
+    median_val = np.median(mags)
+    std_dev = np.std(mags)
+
+    stats_header = "\n---------------------------------------\n"
+    stats_header += "|\tEarthquake Magnitude Statistics\t  |\n"
+    stats_header += "|-------------------------------------|\n"
+    stats_header += "|\tMean\t|\tMedian\t|\tStd.Dev\t  |\n"
+    stats_header += "|-------------------------------------|\n"
+    stats_header += "|\t%.2f\t|\t%.2f\t|\t%.2f\t  |\n" % (mean_val, median_val,std_dev)
+    stats_header += "---------------------------------------"
+
+    print(stats_header)
 
 
 def plot_quake_map(qd):
@@ -94,33 +133,36 @@ def plot_quake_map(qd):
 def plot_magnitude_chart(qd):
     magnitudes = [quake.mag for quake in qd.get_filtered_array()]
 
-    rounded_down_mags = np.floor(magnitudes).astype(int)
+    whole_num_mags = []
 
-    n, bins, patches = plt.hist(magnitudes, bins=10)
+    for mag in magnitudes:
+        if mag == int(mag):
+           whole_num_mags.append(mag)
 
-    fracs = n / n.max()
-    norm = plt.Normalize(fracs.min(), fracs.max())
+    bar_colors = ['tab:red', 'tab:blue', 'tab:green', 'tab:orange', 'tab:purple']
 
-    for this_frac, this_patch in zip(fracs, patches):
-        color = plt.cm.viridis(norm(this_frac))
-        this_patch.set_facecolor(color)
+    bins = np.arange(1,12)
+
+    counts, _ = np.histogram(whole_num_mags, bins=bins)
+
+    x_positions = np.arange(1,11)
+
+
+    plt.xticks(x_positions)
+    plt.yticks(np.arange(15))
 
     plt.ylabel('Frequency')
     plt.xlabel('Magnitude')
     plt.title('Magnitude Analysis')
 
-    mean_val = np.mean(rounded_down_mags)
-    mode_val = 5.5
-    std_dev = np.std(rounded_down_mags)
 
-    legend_labels = [
-        f"Mean: %.2f" % mean_val,
-        f"Mode: %.2f" % mode_val,
-        f"Std. Deviation: %.2f" % std_dev
-    ]
 
-    plt.legend(legend_labels, title="Statistics")
 
+
+    plt.bar(x_positions, counts, width=0.8, edgecolor='black', color=bar_colors)
+
+    plt.annotate(legend_labels, xy=(0.65, 0.80), xycoords='axes fraction',
+                 fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
     plt.show()
 
 
@@ -129,18 +171,22 @@ def get_menu_input(qd):
     if option == '1':
         set_location_filter(qd)
         print("Location filter has been updated.")
+        print(f"Location Filter: (Latitude: {qd.location_filter[0]}, Longitude: {qd.location_filter[1]} Distance: {qd.location_filter[2]} ")
     elif option == '2':
         set_property_filter(qd)
         print("Property filter has been updated.")
+        print(f"Property Filter: (Magnitude: {qd.property_filter[0]}, Felt: {qd.property_filter[1]} Significance: {qd.property_filter[2]} ")
     elif option == '3':
         clear_filters(qd)
         print("Filters have been cleared.")
+        print(f"Location Filter: (Latitude: {qd.location_filter[0]}, Longitude: {qd.location_filter[1]} Distance: {qd.location_filter[2]} ")
+        print(f"Property Filter: (Magnitude: {qd.property_filter[0]}, Felt: {qd.property_filter[1]} Significance: {qd.property_filter[2]} ")
     elif option == '4':
         display_quakes(qd)
     elif option == '5':
-        display_exceptional_quakes()
+        display_exceptional_quakes(qd)
     elif option == '6':
-        display_magnitude_stats()
+        display_magnitude_stats(qd)
     elif option == '7':
         plot_quake_map(qd)
     elif option == '8':
@@ -159,7 +205,7 @@ def analyse_earthquakes():
     quake_data.get_filtered_array()
 
     while True:
-        print_menu()
+        print_menu2()
         get_menu_input(quake_data)
 
 
