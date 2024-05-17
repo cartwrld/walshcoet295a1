@@ -1,8 +1,17 @@
 import numpy as np
+import math
 
 
 def calc_distance(lat1, long1, lat2, long2):
-    pass
+    lat1_rad = math.radians(lat1)
+    lat2_rad = math.radians(lat2)
+    long_delta_rad = math.radians(long2 - long1)
+
+    earth_rad = 6371
+
+    distance = math.acos(math.sin(lat1_rad) * math.sin(lat2_rad) +
+                         math.cos(lat1_rad) * math.cos(lat2_rad) * math.cos(long_delta_rad)) * earth_rad
+    return distance
 
 
 def has_invalid_props(qp):
@@ -45,8 +54,10 @@ class QuakeData:
                 continue
             if len(quake['geometry']['coordinates']) != 3:
                 continue
-
-            # add a check to make sure they're all numbers
+            coords = quake['geometry']['coordinates']
+            for coord in coords:
+                if type(coord) != int or type(coord) != float:
+                    continue
 
             else:
                 valid_quakes.append(
@@ -58,21 +69,29 @@ class QuakeData:
 
     def set_location_filter(self, latitude, longitude, distance):
         QuakeData.location_filter = (latitude, longitude, distance)
-        print(f"Location filter has been updated --> (Latitude: {latitude}, Longitude: {longitude}, Distance: {distance}")
+        msg = "Location filter has been updated --> "
+        msg += f"(Latitude: {latitude}, Longitude: {longitude}, Distance: {distance})"
+        print(msg)
 
     def set_property_filter(self, magnitude, felt, significance):
         QuakeData.property_filter = (magnitude, felt, significance)
-        print(f"Property filter has been updated --> (Magnitude: {magnitude}, Felt: {felt}, Significance: {significance}")
+        msg = "Property filter has been updated -->  "
+        msg += f"(Magnitude: {magnitude}, Felt: {felt}, Significance: {significance})"
+        print(msg)
 
     def clear_filters(self):
         QuakeData.location_filter = (0.0, 0.0, 0.0)
         QuakeData.property_filter = (0.0, 0.0, 0.0)
+        msg = "Location filter has been reset -->  "
+        msg += f"(Latitude: {self.location_filter[0]}, Longitude: {self.location_filter[1]}, Distance: {self.location_filter[2]})\n"
+        msg += "Property filter has been reset -->  "
+        msg += f"(Magnitude: {self.property_filter[0]}, Felt: {self.property_filter[1]}, Significance: {self.property_filter[2]})"
+        print(msg)
 
     def get_filtered_array(self):
+        pass
 
-        print(f"Location filter: {self.location_filter[0]}, {self.location_filter[1]}, {self.location_filter[2]}")
-        print(f"Property filter: {self.property_filter[0]}, {self.property_filter[1]}, {self.property_filter[2]}")
-
+    def get_filtered_list(self):
         filtered_quakes = []
 
         for quake in self.quake_array:
@@ -91,8 +110,6 @@ class QuakeData:
                         filtered_quakes.append(quake)
 
         return filtered_quakes
-
-    def get_filtered_list(self):
         pass
 
 
