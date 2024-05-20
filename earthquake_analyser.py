@@ -1,11 +1,16 @@
-import numpy as np
 import matplotlib.pyplot as plt
-import json
 from pathlib import Path
-from earthquakes import QuakeData, Quake
+import numpy as np
+import json
+import math
+import sys
+
+from earthquakes import QuakeData
 
 
 def print_menu():
+    """This function is responsible for printing the menu for the user"""
+
     menu = "\n==================================================================\n"
     menu += "|\t\t           Earthquake Analyser Menu\t\t\t             |\n"
     menu += "==================================================================\n"
@@ -22,6 +27,8 @@ def print_menu():
 
 
 def set_location_filter(qd):
+    """This function is responsible for prompting the user to enter their desired values for the Location Filter"""
+
     lat = input("Please enter the Latitude:\t")
     lon = input("Please enter the Longitude:\t")
     dist = input("Please enter the Distance:\t")
@@ -37,6 +44,8 @@ def set_location_filter(qd):
 
 
 def set_property_filter(qd):
+    """This function is responsible for prompting the user to enter their desired values for the Property Filter"""
+
     mag = input("Please enter the Magnitude:\t")
     felt = input("Please enter the Felt value:\t")
     sig = input("Please enter the Significance:\t")
@@ -52,94 +61,143 @@ def set_property_filter(qd):
 
 
 def clear_filters(qd):
-    qd.location_filter = (0.0, 0.0, 0.0)
-    qd.property_filter = (0.0, 0.0, 0.0)
+    """This function is responsible for resetting the Location Filter and Property Filter."""
+    qd.clear_filters()
 
 
 def display_quakes(qd):
+    """This function is responsible for displaying the filtered quakes"""
     for quake in qd.get_filtered_array():
         print(quake)
 
 
 def display_exceptional_quakes(qd):
-    mags = [quake.mag for quake in qd.quake_array]
+    """This function is responsible for displaying exceptional quakes, which are quakes that have a
+    magnitude greater than or equal to one standard deviation above the median magnitude"""
 
-    median = np.median(mags)
-    std_dev = np.std(mags)
+    # list of all magnitudes
+    quakes = [quake for quake in qd.get_filtered_list()]
+    magnitudes = [q.mag for q in quakes]
+
+    # calculate the median, std. dev, and threshold of the magnitudes
+    median = np.median(magnitudes)
+    std_dev = np.std(magnitudes)
     threshold = median + std_dev
 
-    exceptional_quakes = [quake for quake in qd.quake_array if quake.mag >= threshold]
+    # filter for quakes that are greater than or equal to one std.dev above median
+    exceptional_quakes = [quake for quake in quakes if quake.mag >= threshold]
 
-    for eq in exceptional_quakes:
-        print(eq)
+    # print out the exceptional quakes
+    for quake in exceptional_quakes:
+        print(quake)
 
 
 def display_magnitude_stats(qd):
-    mags = [quake.mag for quake in qd.quake_array]
+    """This function is responsible for displaying the Mean, Median, and Standard Deviation of the
+        magnitude values of the filtered quakes """
 
-    mean_val = np.mean(mags)
-    median_val = np.median(mags)
-    std_dev = np.std(mags)
+    # list of all magnitudes
+    magnitudes = [entry[1] for entry in qd.quake_array]
+    rounded_down_mags = [math.floor(mag) for mag in magnitudes]
 
-    stats_header = "\n---------------------------------------\n"
-    stats_header += "|\tEarthquake Magnitude Statistics\t  |\n"
-    stats_header += "|-------------------------------------|\n"
-    stats_header += "|\tMean\t|\tMedian\t|\tStd.Dev\t  |\n"
-    stats_header += "|-------------------------------------|\n"
-    stats_header += "|\t%.2f\t|\t%.2f\t|\t%.2f\t  |\n" % (mean_val, median_val, std_dev)
-    stats_header += "---------------------------------------"
+    # calculate the mean, median, and std. dev of the magnitudes
+    mean = np.mean(magnitudes)
+    median = np.median(magnitudes)
+    std_dev = np.std(magnitudes)
 
-    print(stats_header)
+    mean_rounded = np.mean(rounded_down_mags)
+    median_rounded = np.median(rounded_down_mags)
+    std_dev_rounded = np.std(rounded_down_mags)
+
+    # building the output to be displayed to the user
+    stats = "\n-------------------------------------------------------\n"
+    stats += "|\t\t\tEarthquake Magnitude Statistics\t          |\n"
+    stats += "-------------------------------------------------------\n"
+    stats += "|\t             |\t Mean\t|\tMedian\t|\tStd.Dev\t  |\n"
+    stats += "|\tOriginal     |------------------------------------|\n"
+    stats += "|\t             |\t %.2f\t|\t %.2f\t|\t %.2f\t  |\n" % (mean, median, std_dev)
+    stats += "-------------------------------------------------------\n"
+    stats += "|\t             |\t Mean\t|\tMedian\t|\tStd.Dev\t  |\n"
+    stats += "|  Rounded Down  |------------------------------------|\n"
+    stats += "|\t             |\t %.2f\t|\t %.2f\t|\t %.2f\t  |\n" % (mean_rounded, median_rounded, std_dev_rounded)
+    stats += "-------------------------------------------------------\n"
+
+    # print stats
+    print(stats)
 
 
 def plot_quake_map(qd):
-    quake_lats = [quake.lat for quake in qd.quake_array]
-    quake_longs = [quake.long for quake in qd.quake_array]
-    quake_mags = [quake.mag for quake in qd.quake_array]
+    """
+        This function is responsible for calculating and plotting the quakes on a flattened world map, distinguishing
+        quakes by size and by color.
 
-    plt.scatter(x=quake_lats, y=quake_longs, s=[mag ** 4.5 for mag in quake_mags], c=[mag ** 4.5 for mag in quake_mags], alpha=0.5)
-    # plt.scatter(x=quake_lats, y=quake_longs, c=quake_mags)
+        Colorbar/cmap: https://matplotlib.org/stable/users/explain/colors/colormaps.html
+    """
 
+    # list of all latitudes
+    latitudes = [quake.lat for quake in qd.get_filtered_array()]
+    # list of all longitudes
+    longitudes = [quake.long for quake in qd.get_filtered_array()]
+    # list of all magnitudes
+    magnitudes = [quake.mag for quake in qd.get_filtered_array()]
+
+    # plotting the magnitudes on a flattened world map, using colors and size for the magnitude
+    plt.figure(figsize=(10, 8))
+    sc = plt.scatter(x=latitudes, y=longitudes, s=[mag ** 4.0 for mag in magnitudes], c=magnitudes, cmap='viridis',
+                     alpha=0.55)
+
+    # set the title and horizonal/vertical labels for the scatter map
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
     plt.title('Earthquake Map')
-    plt.show()
 
-    plt.figure(figsize=(10, 8))
-    # plt.scatter(quake_longs, quake_lats, s=[mag ** 3.5 for mag in quake_mags], alpha=0.5)
+    # set the colorbar to be based on the values in the scatter
+    cbar = plt.colorbar(sc)
+    cbar.set_label('Magnitude')
+
     plt.show()
 
 
 def plot_magnitude_chart(qd):
-    magnitudes = [quake.mag for quake in qd.get_filtered_array()]
+    """This function is used to calculate and display the frequency of whole-number magnitude earthquakes"""
 
-    whole_num_mags = []
+    # list of magnitudes
+    magnitudes = [quake.mag for quake in qd.get_filtered_list()]
 
-    for mag in magnitudes:
-        if mag == int(mag):
-            whole_num_mags.append(mag)
+    print(magnitudes)
 
-    bar_colors = ['tab:red', 'tab:blue', 'tab:green', 'tab:orange', 'tab:purple', 'tab:pink', 'tab:gray']
+    # list of whole number magnitudes from magnitudes
+    whole_num_mags = [mag for mag in magnitudes if type(mag) is int]
 
-    bins = np.arange(1, 12)
+    print(whole_num_mags)
 
-    counts, _ = np.histogram(whole_num_mags, bins=bins)
+    # list of colors to set the bar colors
+    bar_colors = ['tab:red', 'tab:blue', 'tab:green', 'tab:orange', 'tab:purple',
+                  'tab:pink', 'tab:gray', 'tab:cyan', 'tab:brown']
 
-    x_positions = np.arange(1, 11)
+    # create a histogram using numpy to calculate the counts of each magnitude
+    counts, _ = np.histogram(whole_num_mags, np.arange(1, 12))
 
-    plt.xticks(x_positions)
-    plt.yticks(np.arange(15))
+    # to display 0 to 10 magnitudes
+    x_ticks = np.arange(1, 11)
+    plt.xticks(x_ticks)
+    # to display 0 to the highest frequency (20 for breathing room, only goes up to 11)
+    plt.yticks(np.arange(20))
 
+    # bar chart using the histogram counts with magnitudes at the bottom, and frequency on the left
+    plt.bar(x_ticks, counts, width=0.8, edgecolor='black', color=bar_colors)
+
+    # set the title and horizonal/vertical labels for the bar chart map
+    plt.title('Earthquake Magnitude Analysis')
     plt.ylabel('Frequency')
     plt.xlabel('Magnitude')
-    plt.title('Earthquake Magnitude Analysis')
-
-    plt.bar(x_positions, counts, width=0.8, edgecolor='black', color=bar_colors)
 
     plt.show()
 
 
 def get_menu_input(qd):
+    """This function is used to handle the user input from the console"""
+
     option = input("Please select an option from the menu. (1-9)\n")
     if option == '1':
         set_location_filter(qd)
@@ -170,14 +228,27 @@ def get_menu_input(qd):
 
 
 def analyse_earthquakes():
-    path = Path("./earthquakes.geojson")
+    """This function is used to start begin this Earthquakes Analysis
 
+        sys.argv - https://www.tutorialspoint.com/python/python_command_line_arguments.htm
+    """
+
+    path = None
+
+    # check for passed in arg for filename
+    if len(sys.argv) > 1:
+        path = Path(sys.argv[1])
+    else:
+        path = Path("earthquakes.geojson")
+
+    # read json file
     with open(path, 'r') as file:
         data = json.load(file)
 
+    # create QuakeData obj
     quake_data = QuakeData(data)
-    quake_data.get_filtered_array()
 
+    # start session
     while True:
         print_menu()
         get_menu_input(quake_data)

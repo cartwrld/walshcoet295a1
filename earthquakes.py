@@ -3,6 +3,8 @@ import math
 
 
 def calc_distance(lat1, long1, lat2, long2):
+    """"""
+
     lat1_rad = math.radians(lat1)
     lat2_rad = math.radians(lat2)
     long_delta_rad = math.radians(long2 - long1)
@@ -15,102 +17,151 @@ def calc_distance(lat1, long1, lat2, long2):
 
 
 def has_invalid_props(qp):
+    """This function is a helper function for checking the properties of the features from the geojson to
+        determine if all the necessary properties exist"""
+
     flag = False
 
-    if qp['mag'] == None:
+    if qp['mag'] is None:
         flag = True
-    elif qp['time'] == None:
+    elif qp['time'] is None:
         flag = True
-    elif qp['felt'] == None:
+    elif qp['felt'] is None:
         flag = True
-    elif qp['sig'] == None:
+    elif qp['sig'] is None:
         flag = True
-    elif qp['type'] == None:
+    elif qp['type'] is None:
         flag = True
+
     return flag
 
 
 class QuakeData:
-    """"""
-
-    location_filter = (0, 0, 0)
-    property_filter = (0, 0, 0)
+    """This class respresents the data from the geojson file given as a param. """
 
     def __init__(self, geojson):
 
         valid_quakes = []
 
+        # loop through features
         for quake in geojson['features']:
 
+            # isolate quake properties
             qp = quake['properties']
 
+            # skip if not a features
             if quake['type'] != 'Feature':
                 continue
+            # skip if there are missing props
             if has_invalid_props(qp):
                 continue
+            # skip if geomerty type does not equal point
             if quake['geometry']['type'] != "Point":
                 continue
+            # skip if geometry coordinates are not a list
             if not isinstance(quake['geometry']['coordinates'], list):
                 continue
+            # skip if geometry coordinates list is not of length 3
             if len(quake['geometry']['coordinates']) != 3:
                 continue
             coords = quake['geometry']['coordinates']
             for coord in coords:
-                if type(coord) != int or type(coord) != float:
+                # for each coord, skip if it is not a number
+                if type(coord) is not int or type(coord) is not float:
                     continue
 
-            else:
-                valid_quakes.append(
-                    Quake(qp['mag'], qp['time'], qp['felt'], qp['sig'], qp['types'],
-                          (quake['geometry']['coordinates'][0], quake['geometry']['coordinates'][1])
-                          ))
+            # create quake obj
+            valid_quake = Quake(
+                qp['mag'], qp['time'], int(qp['felt']), int(qp['sig']), qp['types'],
+                (coords[0], coords[1]))
 
-        self.quake_array = valid_quakes
+            # quake is valid, add to list
+            valid_quakes.append(
+                (valid_quake, float(qp['mag']), int(qp['felt']), int(qp['sig']), float(coords[0]), float(coords[1])))
 
-    def set_location_filter(self, latitude, longitude, distance):
-        QuakeData.location_filter = (latitude, longitude, distance)
+        # create structured array
+        self.quake_array = np.array(valid_quakes, dtype=[
+            ('quake', 'O'),
+            ('magnitude', 'float64'),
+            ('felt', 'int32'),
+            ('significance', 'int32'),
+            ('lat', 'float64'),
+            ('long', 'float64')
+        ])
+        self.location_filter = (52.120487, -106.589490, 500)
+        self.property_filter = (5.0, 50, 100)
+
+    def set_location_filter(self, latitude=0, longitude=0, distance=0):
+        """This function is responsible for setting the Location Filter for the Quake Data obj"""
+
+        self.location_filter = (float(latitude), float(longitude), int(distance))
+
         msg = "Location filter has been updated --> "
         msg += f"(Latitude: {latitude}, Longitude: {longitude}, Distance: {distance})"
         print(msg)
 
-    def set_property_filter(self, magnitude, felt, significance):
-        QuakeData.property_filter = (magnitude, felt, significance)
+    def set_property_filter(self, magnitude=0, felt=0, significance=0):
+        """This function is responsible for setting the Property Filter for the Quake Data obj"""
+
+        if magnitude == 0 and felt == 0 and significance == 0:
+            raise ValueError("At least one parameter must be supplied")
+
+        self.property_filter = (float(magnitude), int(felt), int(significance))
+
         msg = "Property filter has been updated -->  "
         msg += f"(Magnitude: {magnitude}, Felt: {felt}, Significance: {significance})"
         print(msg)
 
     def clear_filters(self):
-        QuakeData.location_filter = (0.0, 0.0, 0.0)
-        QuakeData.property_filter = (0.0, 0.0, 0.0)
+        """This function is responsible for resetting the Location Filter and Property Filter for the Quake Data obj"""
+
+        self.location_filter = (0.0, 0.0, 0)
+        self.property_filter = (0.0, 0, 0)
+
+        # printout to display that filter reset was successful
         msg = "Location filter has been reset -->  "
-        msg += f"(Latitude: {self.location_filter[0]}, Longitude: {self.location_filter[1]}, Distance: {self.location_filter[2]})\n"
+        msg += f"(Latitude: {self.location_filter[0]}, "
+        msg += f"Longitude: {self.location_filter[1]}, "
+        msg += f"Distance: {self.location_filter[2]})\n"
         msg += "Property filter has been reset -->  "
-        msg += f"(Magnitude: {self.property_filter[0]}, Felt: {self.property_filter[1]}, Significance: {self.property_filter[2]})"
+        msg += f"(Magnitude: {self.property_filter[0]}, "
+        msg += f"Felt: {self.property_filter[1]}, "
+        msg += f"Significance: {self.property_filter[2]})\n"
         print(msg)
 
     def get_filtered_array(self):
-        pass
+        """This function is responsible for applying the Location/Property filters, and filtering the quakes
+            based on which quakes meet the specified criteria"""
 
-    def get_filtered_list(self):
         filtered_quakes = []
 
         for quake in self.quake_array:
 
-            lat_f = self.location_filter[0]
-            long_f = self.location_filter[1]
-            dist_f = self.location_filter[2]
+            # isolate the Quake obj
+            q = quake[0]
 
-            mag_f = self.property_filter[0]
-            felt_f = self.property_filter[1]
-            sig_f = self.property_filter[2]
+            mag = float(q.mag)
+            sig = int(q.sig)
+            felt = int(q.felt)
 
-            if quake.mag >= mag_f:
-                if quake.sig >= sig_f:
-                    if quake.felt >= felt_f:
-                        filtered_quakes.append(quake)
+            # variables for filter values
+            lat_f, long_f, dist_f = self.location_filter
+            mag_f, felt_f, sig_f = self.property_filter
+
+            # ensure each property is valid
+            if q.get_distance_from(float(lat_f), float(long_f)) >= int(dist_f):
+                if mag >= mag_f:
+                    if sig >= sig_f:
+                        if felt >= felt_f:
+                            filtered_quakes.append(q)
 
         return filtered_quakes
-        pass
+
+    def get_filtered_list(self):
+        """This function is responsible for returning a list of the filtered Quake objects"""
+
+        quake_list = [quake for quake in self.get_filtered_array()]
+        return quake_list
 
 
 class Quake:
@@ -128,5 +179,5 @@ class Quake:
     def __str__(self):
         return f"{self.mag} Magnitude Earthquake, {self.sig} Significance, felt by {self.felt} people in ({self.lat}, {self.long})"
 
-    def get_distance_from(self, latitude, longitude, distance):
-        pass
+    def get_distance_from(self, latitude, longitude):
+        return calc_distance(self.lat, self.long, latitude, longitude)
