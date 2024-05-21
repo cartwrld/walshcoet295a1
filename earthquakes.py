@@ -3,7 +3,15 @@ import math
 
 
 def calc_distance(lat1, long1, lat2, long2):
-    """"""
+    """
+        This function is responsible for calculating the distance between two points based
+        on their latitudes and longitudes
+
+        Caclulation formula -
+           https://stackoverflow.com/questions/19412462/getting-distance-between-two-points-based-on-latitude-longitude
+    """
+
+
 
     lat1_rad = math.radians(lat1)
     lat2_rad = math.radians(lat2)
@@ -20,8 +28,10 @@ def has_invalid_props(qp):
     """This function is a helper function for checking the properties of the features from the geojson to
         determine if all the necessary properties exist"""
 
+    # flag starts out as false
     flag = False
 
+    # if any of the if statements hit, flag will be true
     if qp['mag'] is None:
         flag = True
     elif qp['time'] is None:
@@ -72,7 +82,7 @@ class QuakeData:
 
             # create quake obj
             valid_quake = Quake(
-                qp['mag'], qp['time'], int(qp['felt']), int(qp['sig']), qp['types'],
+                qp['mag'], qp['time'], int(qp['felt']), int(qp['sig']), qp['type'],
                 (coords[0], coords[1]))
 
             # quake is valid, add to list
@@ -88,25 +98,26 @@ class QuakeData:
             ('lat', 'float64'),
             ('long', 'float64')
         ])
-        self.location_filter = (52.120487, -106.589490, 500)
-        self.property_filter = (5.0, 50, 100)
+        # set filters to 0 as default
+        self.location_filter = (0.0, 0.0, 0)
+        self.property_filter = (0.0, 0, 0)
 
-    def set_location_filter(self, latitude=0, longitude=0, distance=0):
+    def set_location_filter(self, latitude=0.0, longitude=0.0, distance=0):
         """This function is responsible for setting the Location Filter for the Quake Data obj"""
 
-        self.location_filter = (float(latitude), float(longitude), int(distance))
+        self.location_filter = (latitude, longitude, distance)
 
         msg = "Location filter has been updated --> "
         msg += f"(Latitude: {latitude}, Longitude: {longitude}, Distance: {distance})"
         print(msg)
 
-    def set_property_filter(self, magnitude=0, felt=0, significance=0):
+    def set_property_filter(self, magnitude=0.0, felt=0, significance=0):
         """This function is responsible for setting the Property Filter for the Quake Data obj"""
 
-        if magnitude == 0 and felt == 0 and significance == 0:
+        if magnitude == 0.0 and felt == 0 and significance == 0:
             raise ValueError("At least one parameter must be supplied")
 
-        self.property_filter = (float(magnitude), int(felt), int(significance))
+        self.property_filter = (magnitude, felt, significance)
 
         msg = "Property filter has been updated -->  "
         msg += f"(Magnitude: {magnitude}, Felt: {felt}, Significance: {significance})"

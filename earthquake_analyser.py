@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import json
 import math
-import sys
+import sys  # uesd for reading the args
 
 from earthquakes import QuakeData
 
@@ -12,15 +12,15 @@ def print_menu():
     """This function is responsible for printing the menu for the user"""
 
     menu = "\n==================================================================\n"
-    menu += "|\t\t           Earthquake Analyser Menu\t\t\t             |\n"
+    menu += "|                    Earthquake Analyser Menu                    |\n"
     menu += "==================================================================\n"
     menu += "|                                                                |\n"
-    menu += "|\t1)\tSet Location Filter\t\t5)\tDisplay Exceptional Quakes\t |\n"
-    menu += "|\t2)\tSet Property Filter\t\t6)\tDisplay Magnitude Stats\t\t |\n"
-    menu += "|\t3)\tClear Filters\t\t\t7)\tPlot Quake Map\t\t\t\t |\n"
-    menu += "|\t4)\tDisplay Quakes\t\t\t8)\tPlot Magnitude Chart\t\t |\n"
+    menu += "|   1)  Set Location Filter    5)  Display Exceptional Quakes    |\n"
+    menu += "|   2)  Set Property Filter    6)  Display Magnitude Stats       |\n"
+    menu += "|   3)  Clear Filters          7)  Plot Quake Map                |\n"
+    menu += "|   4)  Display Quakes         8)  Plot Magnitude Chart          |\n"
     menu += "|                                                                |\n"
-    menu += "|\t\t\t\t\t\t9)\tQuit                                 |\n"
+    menu += "|                      9)  Quit                                  |\n"
     menu += "==================================================================\n"
 
     print(menu)
@@ -33,10 +33,11 @@ def set_location_filter(qd):
     lon = input("Please enter the Longitude:\t")
     dist = input("Please enter the Distance:\t")
 
+    # set the empty values to 0
     if lat == "":
-        lat = 0
+        lat = 0.0
     if lon == "":
-        lon = 0
+        lon = 0.0
     if dist == "":
         dist = 0
 
@@ -50,8 +51,9 @@ def set_property_filter(qd):
     felt = input("Please enter the Felt value:\t")
     sig = input("Please enter the Significance:\t")
 
+    # set the empty values to 0
     if mag == "":
-        mag = 0
+        mag = 0.0
     if felt == "":
         felt = 0
     if sig == "":
@@ -105,22 +107,20 @@ def display_magnitude_stats(qd):
     median = np.median(magnitudes)
     std_dev = np.std(magnitudes)
 
-    mean_rounded = np.mean(rounded_down_mags)
-    median_rounded = np.median(rounded_down_mags)
-    std_dev_rounded = np.std(rounded_down_mags)
+    vals, counts = np.unique(rounded_down_mags, return_counts=True)
+    index = np.argmax(counts)
+
+    mode = vals[index]
+
 
     # building the output to be displayed to the user
-    stats = "\n-------------------------------------------------------\n"
-    stats += "|\t\t\tEarthquake Magnitude Statistics\t          |\n"
-    stats += "-------------------------------------------------------\n"
-    stats += "|\t             |\t Mean\t|\tMedian\t|\tStd.Dev\t  |\n"
-    stats += "|\tOriginal     |------------------------------------|\n"
-    stats += "|\t             |\t %.2f\t|\t %.2f\t|\t %.2f\t  |\n" % (mean, median, std_dev)
-    stats += "-------------------------------------------------------\n"
-    stats += "|\t             |\t Mean\t|\tMedian\t|\tStd.Dev\t  |\n"
-    stats += "|  Rounded Down  |------------------------------------|\n"
-    stats += "|\t             |\t %.2f\t|\t %.2f\t|\t %.2f\t  |\n" % (mean_rounded, median_rounded, std_dev_rounded)
-    stats += "-------------------------------------------------------\n"
+    stats = "\n----------------------------------------------\n"
+    stats += "|       Earthquake Magnitude Statistics      |\n"
+    stats += "----------------------------------------------\n"
+    stats += "|   Mean   |  Median  |  Std.Dev  |   Mode   |\n"
+    stats += "|--------------------------------------------|\n"
+    stats += "|   %.2f   |   %.2f   |    %.2f   |   %.2f   |\n" % (mean, median, std_dev, mode)
+    stats += "----------------------------------------------\n"
 
     # print stats
     print(stats)
@@ -159,30 +159,32 @@ def plot_quake_map(qd):
 
 
 def plot_magnitude_chart(qd):
-    """This function is used to calculate and display the frequency of whole-number magnitude earthquakes"""
+    """This function is used to calculate and display the frequency of whole-number magnitude earthquakes
+
+        Numpy Histogram info - https://www.geeksforgeeks.org/numpy-histogram-method-in-python/
+                             - https://stackoverflow.com/questions/9141732/how-does-numpy-histogram-work
+    """
 
     # list of magnitudes
     magnitudes = [quake.mag for quake in qd.get_filtered_list()]
-
-    print(magnitudes)
-
     # list of whole number magnitudes from magnitudes
     whole_num_mags = [mag for mag in magnitudes if type(mag) is int]
-
-    print(whole_num_mags)
-
     # list of colors to set the bar colors
     bar_colors = ['tab:red', 'tab:blue', 'tab:green', 'tab:orange', 'tab:purple',
                   'tab:pink', 'tab:gray', 'tab:cyan', 'tab:brown']
 
     # create a histogram using numpy to calculate the counts of each magnitude
-    counts, _ = np.histogram(whole_num_mags, np.arange(1, 12))
+    counts = np.histogram(whole_num_mags, np.arange(1, 12))
+
+    # isolate the counts
+    counts = counts[0]
 
     # to display 0 to 10 magnitudes
     x_ticks = np.arange(1, 11)
     plt.xticks(x_ticks)
-    # to display 0 to the highest frequency (20 for breathing room, only goes up to 11)
-    plt.yticks(np.arange(20))
+
+    # to display 0 to the highest frequency (1000 for breathing room, data only goes up to 11)
+    plt.yticks(np.arange(1000))
 
     # bar chart using the histogram counts with magnitudes at the bottom, and frequency on the left
     plt.bar(x_ticks, counts, width=0.8, edgecolor='black', color=bar_colors)
@@ -201,29 +203,22 @@ def get_menu_input(qd):
     option = input("Please select an option from the menu. (1-9)\n")
     if option == '1':
         set_location_filter(qd)
-
     elif option == '2':
         set_property_filter(qd)
-
     elif option == '3':
         clear_filters(qd)
-
     elif option == '4':
         display_quakes(qd)
-
     elif option == '5':
         display_exceptional_quakes(qd)
-
     elif option == '6':
         display_magnitude_stats(qd)
-
     elif option == '7':
         plot_quake_map(qd)
-
     elif option == '8':
         plot_magnitude_chart(qd)
-
     elif option == '9':
+        print("\n\nThanks for analyzing!\n\nGoodbye :)\n\n")
         quit()
 
 
@@ -233,13 +228,11 @@ def analyse_earthquakes():
         sys.argv - https://www.tutorialspoint.com/python/python_command_line_arguments.htm
     """
 
-    path = None
+    path = "earthquakes.geojson"
 
     # check for passed in arg for filename
     if len(sys.argv) > 1:
         path = Path(sys.argv[1])
-    else:
-        path = Path("earthquakes.geojson")
 
     # read json file
     with open(path, 'r') as file:
