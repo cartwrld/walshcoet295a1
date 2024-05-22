@@ -1,26 +1,43 @@
 import numpy as np
 import math
+from math import asin, sin, cos, sqrt, radians
 
+# # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                                                   #
+#   Name:            Carter Walsh (walsh0715)       #
+#   Class:           COET295 - Assignment 1         #
+#   Instructor:      Wade Lahoda & Bryce Barrie     #
+#   Date:            Tuesday, May 21st, 2024        #
+#                                                   #
+# # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 def calc_distance(lat1, long1, lat2, long2):
     """
         This function is responsible for calculating the distance between two points based
         on their latitudes and longitudes
 
-        Caclulation formula -
-           https://stackoverflow.com/questions/19412462/getting-distance-between-two-points-based-on-latitude-longitude
+        Haversine formula -
+            https://stackoverflow.com/questions/4913349/haversine-formula-in-python-bearing-and-distance-between-two-gps-points
+
     """
-
-
-
-    lat1_rad = math.radians(lat1)
-    lat2_rad = math.radians(lat2)
-    long_delta_rad = math.radians(long2 - long1)
 
     earth_rad = 6371
 
-    distance = math.acos(math.sin(lat1_rad) * math.sin(lat2_rad) +
-                         math.cos(lat1_rad) * math.cos(lat2_rad) * math.cos(long_delta_rad)) * earth_rad
+    # get the radian values of the coordinates
+    lat1_rad = radians(lat1)
+    lat2_rad = radians(lat2)
+    long1_rad = radians(long1)
+    long2_rad = radians(long2)
+
+    # calculate the difference of the latitude and longitude
+    delta_long = long2_rad - long1_rad
+    delta_lat = lat2_rad - lat1_rad
+
+    a = sin(delta_lat / 2) ** 2 + cos(lat1_rad) * cos(lat2_rad) * sin(delta_long / 2) ** 2
+    c = 2 * asin(sqrt(a))
+
+    distance = earth_rad * c
+
     return distance
 
 
@@ -47,7 +64,7 @@ def has_invalid_props(qp):
 
 
 class QuakeData:
-    """This class respresents the data from the geojson file given as a param. """
+    """This class represents the data from the geojson file given as a param. """
 
     def __init__(self, geojson):
 
@@ -176,7 +193,7 @@ class QuakeData:
 
 
 class Quake:
-    """"""
+    """This class is for holding information pertaining to the valid earthquakes from the uploaded geojson filer"""
 
     def __init__(self, magnitude, time, felt, sig, q_type, coords):
         self.mag = magnitude
@@ -191,4 +208,5 @@ class Quake:
         return f"{self.mag} Magnitude Earthquake, {self.sig} Significance, felt by {self.felt} people in ({self.lat}, {self.long})"
 
     def get_distance_from(self, latitude, longitude):
+        """This function is responsible for returning the distance away it is from the passed in lat/long"""
         return calc_distance(self.lat, self.long, latitude, longitude)

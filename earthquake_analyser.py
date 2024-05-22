@@ -3,9 +3,18 @@ from pathlib import Path
 import numpy as np
 import json
 import math
-import sys  # uesd for reading the args
-
+import sys  # used for reading the args
 from earthquakes import QuakeData
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                                                   #
+#   Name:            Carter Walsh (walsh0715)       #
+#   Class:           COET295 - Assignment 1         #
+#   Instructor:      Wade Lahoda & Bryce Barrie     #
+#   Date:            Tuesday, May 21st, 2024        #
+#                                                   #
+# # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 
 def print_menu():
@@ -41,7 +50,7 @@ def set_location_filter(qd):
     if dist == "":
         dist = 0
 
-    qd.set_location_filter(lat, lon, dist)
+    qd.set_location_filter(float(lat), float(lon), int(dist))
 
 
 def set_property_filter(qd):
@@ -59,7 +68,7 @@ def set_property_filter(qd):
     if sig == "":
         sig = 0
 
-    qd.set_property_filter(mag, felt, sig)
+    qd.set_property_filter(float(mag), int(felt), int(sig))
 
 
 def clear_filters(qd):
@@ -107,11 +116,11 @@ def display_magnitude_stats(qd):
     median = np.median(magnitudes)
     std_dev = np.std(magnitudes)
 
+    # calculate the mode by getting counts of the unique values, then
     vals, counts = np.unique(rounded_down_mags, return_counts=True)
     index = np.argmax(counts)
 
     mode = vals[index]
-
 
     # building the output to be displayed to the user
     stats = "\n----------------------------------------------\n"
@@ -119,7 +128,7 @@ def display_magnitude_stats(qd):
     stats += "----------------------------------------------\n"
     stats += "|   Mean   |  Median  |  Std.Dev  |   Mode   |\n"
     stats += "|--------------------------------------------|\n"
-    stats += "|   %.2f   |   %.2f   |    %.2f   |   %.2f   |\n" % (mean, median, std_dev, mode)
+    stats += "|   %.2f   |   %.2f   |    %.2f   |     %d    |\n" % (mean, median, std_dev, mode)
     stats += "----------------------------------------------\n"
 
     # print stats
@@ -144,9 +153,9 @@ def plot_quake_map(qd):
     # plotting the magnitudes on a flattened world map, using colors and size for the magnitude
     plt.figure(figsize=(10, 8))
     sc = plt.scatter(x=latitudes, y=longitudes, s=[mag ** 4.0 for mag in magnitudes], c=magnitudes, cmap='viridis',
-                     alpha=0.55)
+                     edgecolor='black', alpha=0.55)  # couldn't choose a color, so I chose a gradient
 
-    # set the title and horizonal/vertical labels for the scatter map
+    # set the title and horizontal/vertical labels for the scatter map
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
     plt.title('Earthquake Map')
@@ -164,32 +173,29 @@ def plot_magnitude_chart(qd):
         Numpy Histogram info - https://www.geeksforgeeks.org/numpy-histogram-method-in-python/
                              - https://stackoverflow.com/questions/9141732/how-does-numpy-histogram-work
     """
-
     # list of magnitudes
     magnitudes = [quake.mag for quake in qd.get_filtered_list()]
     # list of whole number magnitudes from magnitudes
     whole_num_mags = [mag for mag in magnitudes if type(mag) is int]
     # list of colors to set the bar colors
     bar_colors = ['tab:red', 'tab:blue', 'tab:green', 'tab:orange', 'tab:purple',
-                  'tab:pink', 'tab:gray', 'tab:cyan', 'tab:brown']
+                  'tab:pink', 'tab:gray', 'tab:cyan', 'tab:brown', 'tab:olive']
 
     # create a histogram using numpy to calculate the counts of each magnitude
-    counts = np.histogram(whole_num_mags, np.arange(1, 12))
+    counts, _ = np.histogram(whole_num_mags, np.arange(1, 12))
 
-    # isolate the counts
-    counts = counts[0]
-
-    # to display 0 to 10 magnitudes
+    # to display 1 to 10 magnitudes
     x_ticks = np.arange(1, 11)
     plt.xticks(x_ticks)
 
-    # to display 0 to the highest frequency (1000 for breathing room, data only goes up to 11)
+    # to display 0 to the highest frequency (1000 for breathing room, base data only goes up to 11)
     plt.yticks(np.arange(1000))
 
     # bar chart using the histogram counts with magnitudes at the bottom, and frequency on the left
+    plt.figure(figsize=(10, 8))
     plt.bar(x_ticks, counts, width=0.8, edgecolor='black', color=bar_colors)
 
-    # set the title and horizonal/vertical labels for the bar chart map
+    # set the title and horizontal/vertical labels for the bar chart map
     plt.title('Earthquake Magnitude Analysis')
     plt.ylabel('Frequency')
     plt.xlabel('Magnitude')
@@ -218,7 +224,7 @@ def get_menu_input(qd):
     elif option == '8':
         plot_magnitude_chart(qd)
     elif option == '9':
-        print("\n\nThanks for analyzing!\n\nGoodbye :)\n\n")
+        print("\nThanks for analyzing!\n\nGoodbye :)\n")
         quit()
 
 
